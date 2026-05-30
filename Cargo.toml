@@ -1,0 +1,13 @@
+[package]
+name = "jlog"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = "0.4.44"
+clap = { version = "4.6.1", features = ["derive"] }
+colored = "3.1.1"
+directories = "6.0.0"
+open = "5.3.5"
+rusqlite = "0.40.0"
+serde = "1.0.228"
