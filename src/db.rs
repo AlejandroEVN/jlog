@@ -138,7 +138,7 @@ impl DB {
             .expect("error: updating job status");
     }
 
-    pub(crate) fn update_next_interview_date(&self, id: i64, date_as_millis: i64) -> () {
+    pub(crate) fn update_next_interview_date(&self, id: i64, date_as_millis: Option<i64>) -> () {
         self._conn
             .execute(
                 format!(

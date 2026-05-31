@@ -24,6 +24,8 @@ pub enum Commands {
         state: Option<JobStatus>,
     },
 
+    Edit(EditArgs),
+
     /// Update the state of an existing job
     Status {
         /// The ID of the job in the database
@@ -39,7 +41,12 @@ pub enum Commands {
         id: i64,
 
         /// The new interview date
-        next_interview_on: String,
+        #[arg(required_unless_present = "clear")]
+        next_interview_on: Option<String>,
+
+        /// Clear the scheduled interview date entirely
+        #[arg(long, short, conflicts_with = "next_interview_on")]
+        clear: bool,
     },
 
     /// Delete a job application record
@@ -49,7 +56,11 @@ pub enum Commands {
     },
 
     /// Print next upcoming interview
-    Next,
+    Next {
+        /// Number of days ahead to return
+        #[arg(default_value_t = 1)]
+        days: usize,
+    },
 
     /// Opens job application's URL in default browser
     Open {
@@ -77,4 +88,21 @@ pub struct AddArgs {
 
     #[arg(short, long)]
     pub next_interview_on: Option<String>,
+}
+
+#[derive(Args)]
+pub struct EditArgs {
+    pub id: i64,
+
+    #[arg(short, long)]
+    pub location: Option<String>,
+
+    #[arg(short, long)]
+    pub title: Option<String>,
+
+    #[arg(short, long)]
+    pub company: Option<String>,
+
+    #[arg(short, long)]
+    pub url: Option<String>,
 }

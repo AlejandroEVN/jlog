@@ -7,6 +7,7 @@ use directories::ProjectDirs;
 use std::{
     fs,
     io::{self, Write, stdout},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use args::Cli;
@@ -26,12 +27,14 @@ fn main() {
         args::Commands::List { state } => JLog::list_jobs(&db, state),
         args::Commands::Status { id, status } => JLog::update_application_status(&db, id, status),
         args::Commands::Remove { id } => JLog::remove_job(&db, id),
-        args::Commands::Next => JLog::find_next_interview(&db),
+        args::Commands::Next { days } => JLog::find_next_interview(&db, days),
         args::Commands::Interview {
             id,
             next_interview_on,
-        } => JLog::add_next_interview_date(&db, id, next_interview_on),
+            clear,
+        } => JLog::add_next_interview_date(&db, id, next_interview_on, clear),
         args::Commands::Open { id } => JLog::open_job_url(&db, id),
+        args::Commands::Edit(_edit_args) => todo!(),
     };
 }
 
@@ -49,19 +52,27 @@ impl JLog {
         }
     }
 
-    fn find_next_interview(db: &DB) {
+    fn find_next_interview(db: &DB, days: usize) {
         let stdout = stdout();
         let mut handle = io::BufWriter::new(stdout);
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards?")
+            .as_millis();
 
         let mut job_applications = db.get_job_applications();
 
         job_applications.sort_by_key(|ja| (ja.next_interview_on.is_none(), ja.next_interview_on));
 
-        if let Some(next) = job_applications.first() {
-            writeln!(handle, "{}", &next).unwrap();
-        } else {
-            writeln!(handle, "Nothing coming up").unwrap();
-        };
+        job_applications
+            .iter()
+            .filter(|ja| ja.next_interview_on.unwrap_or(0) > current_time as i64)
+            .take(days)
+            .for_each(|ja| {
+                if let Some(_) = ja.next_interview_on {
+                    writeln!(handle, "{}", &ja).unwrap();
+                }
+            });
     }
 
     fn add_job(db: &DB, add_args: AddArgs) {
@@ -78,8 +89,13 @@ impl JLog {
         let _ = db.update_application_status(id, status);
     }
 
-    fn add_next_interview_date(db: &DB, id: i64, next_interview_on: String) {
-        let date_as_millis = JobApplication::timestamp_to_millis(next_interview_on);
+    fn add_next_interview_date(db: &DB, id: i64, next_interview_on: Option<String>, clear: bool) {
+        let date_as_millis = match (clear, next_interview_on) {
+            (true, _) => None,
+            (false, Some(date)) => Some(JobApplication::timestamp_to_millis(date)),
+            (false, None) => None,
+        };
+
         let _ = db.update_next_interview_date(id, date_as_millis);
     }
 
