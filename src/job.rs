@@ -31,7 +31,7 @@ impl JobStatus {
     fn from_str(s: &str) -> JobStatus {
         match s {
             "applied" => JobStatus::Applied,
-            "inteview_stage" => JobStatus::InterviewStage,
+            "interview" => JobStatus::InterviewStage,
             "declined" => JobStatus::Declined,
             "offer" => JobStatus::Offer,
             "accepted" => JobStatus::Accepted,
@@ -42,7 +42,7 @@ impl JobStatus {
     fn to_str(&self) -> &str {
         match self {
             JobStatus::Applied => "applied",
-            JobStatus::InterviewStage => "inteview_stage",
+            JobStatus::InterviewStage => "interview",
             JobStatus::Declined => "declined",
             JobStatus::Offer => "offer",
             JobStatus::Accepted => "accepted",

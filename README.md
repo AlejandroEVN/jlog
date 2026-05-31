@@ -7,7 +7,7 @@
 ## Features
 
 * **Fast Tracking:** Quickly log new job openings, companies, locations, and application links.
-* **Status Lifecycle Management:** Move application states seamlessly through `applied`, `interview-stage`, `declined`, `offer`, and `accepted`.
+* **Status Lifecycle Management:** Move application states seamlessly through `applied`, `interview`, `declined`, `offer`, and `accepted`.
 * **Interview Scheduler:** Track upcoming interview dates and display what's next immediately.
 * **Quick Links:** Open the original job posting URL directly in your default browser using the application ID.
 * **Rich Terminal UI:** Colored, formatted outputs for high readability at a glance.
@@ -100,7 +100,7 @@ The application recognizes the following valid state parameters (case-insensitiv
 | State Flag | Display Text |
 | --- | --- |
 | `applied` | Applied |
-| `interview-stage` | Interviewing |
+| `interview`| Interviewing |
 | `declined` | Declined |
 | `offer` | Offer |
 | `accepted` | Accepted |
