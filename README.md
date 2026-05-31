@@ -1,13 +1,13 @@
 # jlog 💼
 
-`jlog` is a lightweight, terminal-based CLI tool designed to help developers track, organize, and manage their job applications without ever leaving the command line. Built with Rust, it uses a local SQLite database to store data, offers colored terminal output, and integrates smoothly with your system browser.
+`jlog` is a lightweight, simple, terminal-based CLI tool designed to help track, organize, and manage their job applications without ever leaving the command line. Built with Rust, it uses a local SQLite database to store data, offers colored terminal output, and integrates smoothly with your system browser.
 
 ---
 
 ## Features
 
 * **Fast Tracking:** Quickly log new job openings, companies, locations, and application links.
-* **Status Lifecycle Management:** Move application states seamlessly through `applied`, `interview`, `declined`, `offer`, and `accepted`.
+* **Status Lifecycle Management:** Move application states through `applied`, `interview`, `declined`, `offer`, and `accepted`.
 * **Interview Scheduler:** Track upcoming interview dates and display what's next immediately.
 * **Quick Links:** Open the original job posting URL directly in your default browser using the application ID.
 * **Rich Terminal UI:** Colored, formatted outputs for high readability at a glance.
@@ -57,8 +57,8 @@ Usage: jlog <COMMAND>
 Commands:
   add        Add a new job application
   list       List all tracked job applications
-  status     Update the state of an existing job
   interview  Update the state of an existing job
+  edit       Update the job application's metadata
   remove     Delete a job application record
   next       Print next upcoming interview
   open       Opens job application's URL in default browser
