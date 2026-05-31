@@ -11,3 +11,10 @@ directories = "6.0.0"
 open = "5.3.5"
 rusqlite = "0.40.0"
 serde = "1.0.228"
+
+[profile.release]
+opt-level = "z"
+strip = true
+lto = "fat"
+panic = "abort"
+codegen-units = 1
