@@ -24,16 +24,8 @@ pub enum Commands {
         state: Option<JobStatus>,
     },
 
+    /// Edit metadata of job application entry
     Edit(EditArgs),
-
-    /// Update the state of an existing job
-    Status {
-        /// The ID of the job in the database
-        id: i64,
-        /// The new state to transition to
-        #[arg(value_enum)]
-        status: JobStatus,
-    },
 
     /// Update the state of an existing job
     Interview {
@@ -105,4 +97,7 @@ pub struct EditArgs {
 
     #[arg(short, long)]
     pub url: Option<String>,
+
+    #[arg(short, long, value_enum)]
+    pub status: Option<JobStatus>,
 }

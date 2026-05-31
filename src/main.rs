@@ -13,7 +13,10 @@ use std::{
 use args::Cli;
 use db::DB;
 
-use crate::{args::AddArgs, job::JobApplication};
+use crate::{
+    args::{AddArgs, EditArgs},
+    job::JobApplication,
+};
 
 fn main() {
     let directory = init();
@@ -25,7 +28,6 @@ fn main() {
     match cli_args.command {
         args::Commands::Add(add_args) => JLog::add_job(&db, add_args),
         args::Commands::List { state } => JLog::list_jobs(&db, state),
-        args::Commands::Status { id, status } => JLog::update_application_status(&db, id, status),
         args::Commands::Remove { id } => JLog::remove_job(&db, id),
         args::Commands::Next { days } => JLog::find_next_interview(&db, days),
         args::Commands::Interview {
@@ -34,7 +36,7 @@ fn main() {
             clear,
         } => JLog::add_next_interview_date(&db, id, next_interview_on, clear),
         args::Commands::Open { id } => JLog::open_job_url(&db, id),
-        args::Commands::Edit(_edit_args) => todo!(),
+        args::Commands::Edit(edit_args) => JLog::update_job_application(&db, edit_args),
     };
 }
 
@@ -85,10 +87,6 @@ impl JLog {
         let _ = db.delete_job_application(id);
     }
 
-    fn update_application_status(db: &DB, id: i64, status: job::JobStatus) {
-        let _ = db.update_application_status(id, status);
-    }
-
     fn add_next_interview_date(db: &DB, id: i64, next_interview_on: Option<String>, clear: bool) {
         let date_as_millis = match (clear, next_interview_on) {
             (true, _) => None,
@@ -114,6 +112,10 @@ impl JLog {
         } else {
             eprintln!("Job application with ID {} not found", id);
         }
+    }
+
+    fn update_job_application(db: &DB, edit_args: EditArgs) {
+        let _ = db.update_job_application(edit_args);
     }
 }
 

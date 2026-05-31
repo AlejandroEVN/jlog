@@ -1,8 +1,17 @@
 use std::path::Path;
 
-use crate::job::JobApplication;
+use crate::{args, job::JobApplication};
 
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, ToSql, params};
+
+macro_rules! push_optional_field {
+    ($assignments:ident, $values:expr, $field:expr, $column_name:expr) => {
+        if let Some(val) = $field {
+            $assignments.push(concat!($column_name, " = ?"));
+            $values.push(Box::new(val) as Box<dyn rusqlite::ToSql>);
+        }
+    };
+}
 
 pub struct DB {
     _conn: Connection,
@@ -125,16 +134,35 @@ impl DB {
             .expect("error: deleting job application");
     }
 
-    pub(crate) fn update_application_status(&self, id: i64, status: crate::job::JobStatus) -> () {
+    pub(crate) fn update_job_application(&self, edit_args: args::EditArgs) -> () {
+        let mut assignments = Vec::new();
+        let mut values: Vec<Box<dyn ToSql>> = Vec::new();
+
+        push_optional_field!(assignments, values, edit_args.location, "location");
+        push_optional_field!(assignments, values, edit_args.status, "status");
+        push_optional_field!(assignments, values, edit_args.company, "company");
+        push_optional_field!(assignments, values, edit_args.url, "url");
+        push_optional_field!(assignments, values, edit_args.title, "title");
+
+        if assignments.is_empty() {
+            return;
+        }
+
+        assignments.push("updated_on = ?");
+        values.push(Box::new(chrono::Utc::now().timestamp_millis()));
+
+        values.push(Box::new(edit_args.id));
+
+        let query = format!(
+            "UPDATE {} SET {} WHERE id = ?",
+            TABLE_NAME,
+            assignments.join(", ")
+        );
+
+        let params = rusqlite::params_from_iter(values);
+
         self._conn
-            .execute(
-                format!(
-                    "UPDATE {} SET status = ?1, updated_on = ?2 WHERE id = ?3",
-                    TABLE_NAME
-                )
-                .as_str(),
-                params![status, chrono::Utc::now().timestamp_millis(), id],
-            )
+            .execute(&query, params)
             .expect("error: updating job status");
     }
 
