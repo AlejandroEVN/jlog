@@ -15,7 +15,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
         mkdir -p "$INSTALL_DIR"
     fi
 elif [ "$OS_TYPE" = "Linux" ]; then
-    echo "🐧 Operating System: Linux"
+    echo "Operating System: Linux"
     INSTALL_DIR="/usr/local/bin"
 else
     echo "Unsupported OS: $OS_TYPE"
