@@ -47,7 +47,7 @@ impl DB {
         Self { _conn }
     }
 
-    pub fn insert_job_application(&self, job: &JobApplication) -> rusqlite::Result<()> {
+    pub fn insert_job_application(&self, job: &JobApplication) -> rusqlite::Result<i64> {
         self._conn
             .execute(
                 format!(
@@ -77,7 +77,9 @@ impl DB {
             )
             .expect("error: inserting results");
 
-        Ok(())
+        let last_inserted_id = self._conn.last_insert_rowid();
+
+        Ok(last_inserted_id)
     }
 
     pub fn get_job_applications(&self) -> Vec<JobApplication> {

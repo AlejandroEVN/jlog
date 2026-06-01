@@ -78,9 +78,14 @@ impl JLog {
     }
 
     fn add_job(db: &DB, add_args: AddArgs) {
+        let stdout = stdout();
+        let mut handle = io::BufWriter::new(stdout);
+
         let job_application = JobApplication::from_args(add_args);
 
-        let _ = db.insert_job_application(&job_application);
+        if let Ok(id) = db.insert_job_application(&job_application) {
+            writeln!(handle, "Job added <id:{:?}>", id).unwrap();
+        };
     }
 
     fn remove_job(db: &DB, id: i64) {
