@@ -1,4 +1,4 @@
-# jlog 💼
+# jlog
 
 `jlog` is a lightweight, simple, terminal-based CLI tool designed to help track, organize, and manage their job applications without ever leaving the command line. Built with Rust, it uses a local SQLite database to store data, offers colored terminal output, and integrates smoothly with your system browser.
 
@@ -82,14 +82,14 @@ Whenever you input an interview timestamp, it must strictly follow this format:
 Add a job by providing the core details. You can optionally include an initial status or a scheduled interview date.
 
 ```bash
-jlog add --title "Software Engineer" --company "Acme Corp" --location "Remote" --url "[https://jobs.acme.com/123](https://jobs.acme.com/123)"
+jlog add --title "Software Engineer" --company "Acme Corp" --location "Remote" --url "https://jobs.acme.com/123"
 
 ```
 
 *Include an initial state and interview:*
 
 ```bash
-jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "[https://ferris.io/job](https://ferris.io/job)" --state interview-stage --next-interview-on "24/06/26@10:00"
+jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --state interview-stage --next-interview-on "24/06/26@10:00"
 
 ```
 
