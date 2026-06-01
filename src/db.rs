@@ -106,7 +106,7 @@ impl DB {
             )
             .expect("error: getting job applications");
 
-        let results = statement
+        statement
             .query_map([], |row| {
                 Ok(JobApplication {
                     id: row.get(0)?,
@@ -122,12 +122,10 @@ impl DB {
             })
             .expect("error: executing GET query")
             .collect::<rusqlite::Result<Vec<JobApplication>>>()
-            .expect("error: collecting results data");
-
-        results
+            .expect("error: collecting results data")
     }
 
-    pub fn delete_job_application(&self, id: i64) -> () {
+    pub fn delete_job_application(&self, id: i64) {
         self._conn
             .execute(
                 format!("DELETE FROM {} WHERE id = ?1", TABLE_NAME).as_str(),
@@ -136,7 +134,7 @@ impl DB {
             .expect("error: deleting job application");
     }
 
-    pub(crate) fn update_job_application(&self, edit_args: args::EditArgs) -> () {
+    pub(crate) fn update_job_application(&self, edit_args: args::EditArgs) {
         let mut assignments = Vec::new();
         let mut values: Vec<Box<dyn ToSql>> = Vec::new();
 
@@ -168,7 +166,7 @@ impl DB {
             .expect("error: updating job status");
     }
 
-    pub(crate) fn update_next_interview_date(&self, id: i64, date_as_millis: Option<i64>) -> () {
+    pub(crate) fn update_next_interview_date(&self, id: i64, date_as_millis: Option<i64>) {
         self._conn
             .execute(
                 format!(

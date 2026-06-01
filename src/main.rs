@@ -71,7 +71,7 @@ impl JLog {
             .filter(|ja| ja.next_interview_on.unwrap_or(0) > current_time as i64)
             .take(days)
             .for_each(|ja| {
-                if let Some(_) = ja.next_interview_on {
+                if ja.next_interview_on.is_some() {
                     writeln!(handle, "{}", &ja).unwrap();
                 }
             });
@@ -89,7 +89,7 @@ impl JLog {
     }
 
     fn remove_job(db: &DB, id: i64) {
-        let _ = db.delete_job_application(id);
+        db.delete_job_application(id);
     }
 
     fn add_next_interview_date(db: &DB, id: i64, next_interview_on: Option<String>, clear: bool) {
@@ -99,7 +99,7 @@ impl JLog {
             (false, None) => None,
         };
 
-        let _ = db.update_next_interview_date(id, date_as_millis);
+        db.update_next_interview_date(id, date_as_millis);
     }
 
     fn open_job_url(db: &DB, id: i64) {
@@ -120,7 +120,7 @@ impl JLog {
     }
 
     fn update_job_application(db: &DB, edit_args: EditArgs) {
-        let _ = db.update_job_application(edit_args);
+        db.update_job_application(edit_args);
     }
 }
 

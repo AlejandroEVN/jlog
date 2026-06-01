@@ -114,10 +114,7 @@ impl JobApplication {
             .expect("Time went backwards?")
             .as_millis();
 
-        let next_interview_on_as_millis = match add_args.next_interview_on {
-            Some(next) => Some(Self::timestamp_to_millis(next)),
-            None => None,
-        };
+        let next_interview_on_as_millis = add_args.next_interview_on.map(Self::timestamp_to_millis);
 
         JobApplication {
             id: None,
