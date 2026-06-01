@@ -110,7 +110,3 @@ The application recognizes the following valid state parameters (case-insensitiv
 ## License
 
 This project is open-source. Feel free to tweak, fork, and adapt it to your personal career hunting workflows!
-
-```
-
-```
