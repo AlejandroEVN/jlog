@@ -6,13 +6,13 @@ use std::{
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clap::ValueEnum;
-use colored::*;
+use colored::{ColoredString, Colorize};
 use rusqlite::{
     ToSql,
     types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
 
-#[derive(Debug, Clone, PartialEq, ValueEnum)]
+#[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
 pub enum JobStatus {
     Applied,
     InterviewStage,
@@ -28,34 +28,33 @@ impl Display for JobStatus {
 }
 
 impl JobStatus {
-    fn from_str(s: &str) -> JobStatus {
+    fn from_str(s: &str) -> Self {
         match s {
-            "applied" => JobStatus::Applied,
-            "interview" => JobStatus::InterviewStage,
-            "declined" => JobStatus::Declined,
-            "offer" => JobStatus::Offer,
-            "accepted" => JobStatus::Accepted,
-            _ => JobStatus::Applied,
+            "interview" => Self::InterviewStage,
+            "declined" => Self::Declined,
+            "offer" => Self::Offer,
+            "accepted" => Self::Accepted,
+            _ => Self::Applied,
         }
     }
 
-    fn to_str(&self) -> &str {
+    const fn to_str(&self) -> &str {
         match self {
-            JobStatus::Applied => "applied",
-            JobStatus::InterviewStage => "interview",
-            JobStatus::Declined => "declined",
-            JobStatus::Offer => "offer",
-            JobStatus::Accepted => "accepted",
+            Self::Applied => "applied",
+            Self::InterviewStage => "interview",
+            Self::Declined => "declined",
+            Self::Offer => "offer",
+            Self::Accepted => "accepted",
         }
     }
 
     fn to_str_colored(&self) -> ColoredString {
         match self {
-            JobStatus::Applied => "  Applied   ".blue().bold(),
-            JobStatus::InterviewStage => "Interviewing".yellow().bold(),
-            JobStatus::Declined => "  Declined  ".red().bold(),
-            JobStatus::Offer => "  Offer     ".bright_green().bold(),
-            JobStatus::Accepted => "  Accepted  ".green().bold(),
+            Self::Applied => "  Applied   ".blue().bold(),
+            Self::InterviewStage => "Interviewing".yellow().bold(),
+            Self::Declined => "  Declined  ".red().bold(),
+            Self::Offer => "  Offer     ".bright_green().bold(),
+            Self::Accepted => "  Accepted  ".green().bold(),
         }
     }
 }
@@ -75,11 +74,9 @@ pub struct JobApplication {
 
 impl Display for JobApplication {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let next_interview_on = if let Some(next) = self.next_interview_on {
-            JobApplication::format_timestamp(next)
-        } else {
-            "----------------".to_string()
-        };
+        let next_interview_on = self
+            .next_interview_on
+            .map_or_else(|| "----------------".to_string(), Self::format_timestamp);
 
         write!(
             f,
@@ -114,35 +111,43 @@ impl JobApplication {
             .expect("Time went backwards?")
             .as_millis();
 
-        let next_interview_on_as_millis = add_args.next_interview_on.map(Self::timestamp_to_millis);
+        let next_interview_on_as_millis = add_args
+            .next_interview_on
+            .map(|next| Self::timestamp_to_millis(&next));
 
-        JobApplication {
+        let current_time = i64::try_from(current_time).unwrap();
+
+        Self {
             id: None,
             title: add_args.title,
             company: add_args.company,
             location: add_args.location,
             url: add_args.url,
-            applied_on: current_time as i64,
-            updated_on: current_time as i64,
+            applied_on: current_time,
+            updated_on: current_time,
             status: add_args.state.unwrap_or(JobStatus::Applied),
             next_interview_on: next_interview_on_as_millis,
         }
     }
 
-    pub fn timestamp_to_millis(timestamp: String) -> i64 {
-        if let Ok(naive_datetime) = NaiveDateTime::parse_from_str(&timestamp, "%d/%m/%y@%H:%M") {
-            let datetime_utc = naive_datetime.and_local_timezone(Utc).unwrap();
-            datetime_utc.timestamp_millis()
-        } else {
-            eprintln!("Error parsing date. Date should be formatted as dd/mm/yy@HH:MM");
-            process::exit(1);
-        }
+    pub fn timestamp_to_millis(timestamp: &str) -> i64 {
+        let naive_datetime = NaiveDateTime::parse_from_str(timestamp, "%d/%m/%y@%H:%M")
+            .unwrap_or_else(|_| {
+                eprintln!("Error parsing date. Date should be formatted as dd/mm/yy@HH:MM");
+                process::exit(1);
+            });
+
+        naive_datetime
+            .and_local_timezone(Utc)
+            .unwrap()
+            .timestamp_millis()
     }
 
     pub fn format_timestamp(ms: i64) -> String {
-        DateTime::from_timestamp_millis(ms)
-            .map(|dt| dt.format(date_format_with_time!().as_str()).to_string())
-            .unwrap_or_else(|| "Invalid Date".to_string())
+        DateTime::from_timestamp_millis(ms).map_or_else(
+            || "Invalid Date".to_string(),
+            |dt| dt.format(date_format_with_time!().as_str()).to_string(),
+        )
     }
 }
 
@@ -156,6 +161,6 @@ impl FromSql for JobStatus {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         let state = value.as_str()?;
 
-        Ok(JobStatus::from_str(state))
+        Ok(Self::from_str(state))
     }
 }

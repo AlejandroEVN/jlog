@@ -14,19 +14,18 @@ macro_rules! push_optional_field {
 }
 
 pub struct DB {
-    _conn: Connection,
+    conn: Connection,
 }
 
 const TABLE_NAME: &str = "job_application";
 
 impl DB {
     pub fn new(path: &Path) -> Self {
-        let _conn = Connection::open(path.join("jlog.db")).expect("error: connecting to local db");
+        let conn = Connection::open(path.join("jlog.db")).expect("error: connecting to local db");
 
-        _conn
-            .execute(
-                format!(
-                    "CREATE TABLE IF NOT EXISTS {} (
+        conn.execute(
+            format!(
+                "CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
                 id INTEGER PRIMARY KEY,
                 title TEXT NOT NULL,
                 location TEXT NOT NULL,
@@ -36,22 +35,21 @@ impl DB {
                 updated_on INTEGER NOT NULL,
                 status TEXT NOT NULL,
                 next_interview_on INTEGER
-            );",
-                    TABLE_NAME
-                )
-                .as_str(),
-                (),
+            );"
             )
-            .expect("error: creating table");
+            .as_str(),
+            (),
+        )
+        .expect("error: creating table");
 
-        Self { _conn }
+        Self { conn }
     }
 
-    pub fn insert_job_application(&self, job: &JobApplication) -> rusqlite::Result<i64> {
-        self._conn
+    pub fn insert_job_application(&self, job: &JobApplication) -> i64 {
+        self.conn
             .execute(
                 format!(
-                    "INSERT INTO {} (
+                    "INSERT INTO {TABLE_NAME} (
                 title,
                 location,
                 company,
@@ -60,8 +58,7 @@ impl DB {
                 updated_on,
                 status,
                 next_interview_on
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);",
-                    TABLE_NAME
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);"
                 )
                 .as_str(),
                 params![
@@ -77,14 +74,12 @@ impl DB {
             )
             .expect("error: inserting results");
 
-        let last_inserted_id = self._conn.last_insert_rowid();
-
-        Ok(last_inserted_id)
+        self.conn.last_insert_rowid()
     }
 
     pub fn get_job_applications(&self) -> Vec<JobApplication> {
         let mut statement = self
-            ._conn
+            .conn
             .prepare(
                 format!(
                     "
@@ -98,9 +93,8 @@ impl DB {
                     updated_on,
                     status,
                     next_interview_on
-                FROM {}
-                ORDER BY applied_on DESC;",
-                    TABLE_NAME
+                FROM {TABLE_NAME}
+                ORDER BY applied_on DESC;"
                 )
                 .as_str(),
             )
@@ -126,9 +120,9 @@ impl DB {
     }
 
     pub fn delete_job_application(&self, id: i64) {
-        self._conn
+        self.conn
             .execute(
-                format!("DELETE FROM {} WHERE id = ?1", TABLE_NAME).as_str(),
+                format!("DELETE FROM {TABLE_NAME} WHERE id = ?1").as_str(),
                 params![id],
             )
             .expect("error: deleting job application");
@@ -161,17 +155,16 @@ impl DB {
 
         let params = rusqlite::params_from_iter(values);
 
-        self._conn
+        self.conn
             .execute(&query, params)
             .expect("error: updating job status");
     }
 
     pub(crate) fn update_next_interview_date(&self, id: i64, date_as_millis: Option<i64>) {
-        self._conn
+        self.conn
             .execute(
                 format!(
-                    "UPDATE {} SET next_interview_on = ?1, updated_on = ?2 WHERE id = ?3",
-                    TABLE_NAME
+                    "UPDATE {TABLE_NAME} SET next_interview_on = ?1, updated_on = ?2 WHERE id = ?3"
                 )
                 .as_str(),
                 params![date_as_millis, chrono::Utc::now().timestamp_millis(), id],

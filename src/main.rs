@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic, clippy::nursery)]
 mod args;
 mod db;
 mod job;
@@ -37,7 +38,7 @@ fn main() {
         } => JLog::add_next_interview_date(&db, id, next_interview_on, clear),
         args::Commands::Open { id } => JLog::open_job_url(&db, id),
         args::Commands::Edit(edit_args) => JLog::update_job_application(&db, edit_args),
-    };
+    }
 }
 
 struct JLog {}
@@ -68,7 +69,7 @@ impl JLog {
 
         job_applications
             .iter()
-            .filter(|ja| ja.next_interview_on.unwrap_or(0) > current_time as i64)
+            .filter(|ja| ja.next_interview_on.unwrap_or(0) > i64::try_from(current_time).unwrap())
             .take(days)
             .for_each(|ja| {
                 if ja.next_interview_on.is_some() {
@@ -83,9 +84,9 @@ impl JLog {
 
         let job_application = JobApplication::from_args(add_args);
 
-        if let Ok(id) = db.insert_job_application(&job_application) {
-            writeln!(handle, "Job added <id:{:?}>", id).unwrap();
-        };
+        let id = db.insert_job_application(&job_application);
+
+        writeln!(handle, "Job added <id:{id}>").unwrap();
     }
 
     fn remove_job(db: &DB, id: i64) {
@@ -94,9 +95,8 @@ impl JLog {
 
     fn add_next_interview_date(db: &DB, id: i64, next_interview_on: Option<String>, clear: bool) {
         let date_as_millis = match (clear, next_interview_on) {
-            (true, _) => None,
-            (false, Some(date)) => Some(JobApplication::timestamp_to_millis(date)),
-            (false, None) => None,
+            (true, _) | (false, None) => None,
+            (false, Some(date)) => Some(JobApplication::timestamp_to_millis(&date)),
         };
 
         db.update_next_interview_date(id, date_as_millis);
@@ -115,7 +115,7 @@ impl JLog {
                 eprintln!("Failed to open URL: {}", &ja.url);
             }
         } else {
-            eprintln!("Job application with ID {} not found", id);
+            eprintln!("Job application with ID {id} not found");
         }
     }
 
