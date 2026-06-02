@@ -16,6 +16,7 @@ use db::DB;
 
 use crate::{
     args::{AddArgs, EditArgs},
+    db::JobQueryBuilder,
     job::JobApplication,
 };
 
@@ -28,7 +29,7 @@ fn main() {
 
     match cli_args.command {
         args::Commands::Add(add_args) => JLog::add_job(&db, add_args),
-        args::Commands::List { state } => JLog::list_jobs(&db, state),
+        args::Commands::List { state, prune } => JLog::list_jobs(&db, state, prune),
         args::Commands::Remove { id } => JLog::remove_job(&db, id),
         args::Commands::Next { days } => JLog::find_next_interview(&db, days),
         args::Commands::Interview {
@@ -44,11 +45,12 @@ fn main() {
 struct JLog {}
 
 impl JLog {
-    fn list_jobs(db: &DB, _status: Option<job::JobStatus>) {
+    fn list_jobs(db: &DB, statuses: Option<Vec<job::JobStatus>>, prune: bool) {
         let stdout = stdout();
         let mut handle = io::BufWriter::new(stdout);
 
-        let job_applications = db.get_job_applications();
+        let job_applications =
+            db.get_job_applications(JobQueryBuilder::new().with_statuses(statuses).prune(prune));
 
         for app in job_applications {
             writeln!(handle, "{}", &app).unwrap();
@@ -63,7 +65,7 @@ impl JLog {
             .expect("Time went backwards?")
             .as_millis();
 
-        let mut job_applications = db.get_job_applications();
+        let mut job_applications = db.get_job_applications(JobQueryBuilder::default());
 
         job_applications.sort_by_key(|ja| (ja.next_interview_on.is_none(), ja.next_interview_on));
 
@@ -106,7 +108,7 @@ impl JLog {
         let stdout = stdout();
         let mut handle = io::BufWriter::new(stdout);
 
-        let job_applications = db.get_job_applications();
+        let job_applications = db.get_job_applications(JobQueryBuilder::default());
 
         if let Some(ja) = job_applications.iter().find(|ja| ja.id == Some(id)) {
             if open::that(&ja.url).is_ok() {

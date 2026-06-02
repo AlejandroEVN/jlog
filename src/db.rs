@@ -1,6 +1,9 @@
 use std::path::Path;
 
-use crate::{args, job::JobApplication};
+use crate::{
+    args,
+    job::{JobApplication, JobStatus},
+};
 
 use rusqlite::{Connection, ToSql, params};
 
@@ -15,6 +18,42 @@ macro_rules! push_optional_field {
 
 pub struct DB {
     conn: Connection,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct JobQueryBuilder {
+    pub statuses: Option<Vec<JobStatus>>,
+    pub prune: bool,
+}
+
+impl JobQueryBuilder {
+    pub(crate) fn new() -> Self {
+        Self::default()
+    }
+
+    pub(crate) fn with_statuses(mut self, statuses: Option<Vec<JobStatus>>) -> Self {
+        self.statuses = statuses;
+        self
+    }
+
+    pub(crate) const fn prune(mut self, prune: bool) -> Self {
+        self.prune = prune;
+        self
+    }
+
+    fn into_where_clause(self) -> String {
+        self.statuses.map_or_else(String::new, |status_vec| {
+            let as_string = status_vec
+                .iter()
+                .map(|js| format!("\"{js}\""))
+                .collect::<Vec<String>>()
+                .join(",");
+
+            let prune = if self.prune { "NOT IN" } else { "IN" };
+
+            format!("WHERE status {prune} ({as_string})")
+        })
+    }
 }
 
 const TABLE_NAME: &str = "job_application";
@@ -77,7 +116,9 @@ impl DB {
         self.conn.last_insert_rowid()
     }
 
-    pub fn get_job_applications(&self) -> Vec<JobApplication> {
+    pub fn get_job_applications(&self, query_builder: JobQueryBuilder) -> Vec<JobApplication> {
+        let where_clause = query_builder.into_where_clause();
+
         let mut statement = self
             .conn
             .prepare(
@@ -94,6 +135,7 @@ impl DB {
                     status,
                     next_interview_on
                 FROM {TABLE_NAME}
+                {where_clause}
                 ORDER BY applied_on DESC;"
                 )
                 .as_str(),

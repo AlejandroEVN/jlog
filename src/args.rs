@@ -20,8 +20,11 @@ pub enum Commands {
     /// List all tracked job applications
     List {
         /// Filter by specific job state
-        #[arg(short, long, value_enum)]
-        state: Option<JobStatus>,
+        #[clap(value_delimiter = ' ')]
+        state: Option<Vec<JobStatus>>,
+
+        #[arg(long)]
+        prune: bool,
     },
 
     /// Edit metadata of job application entry
