@@ -89,7 +89,7 @@ jlog add --title "Software Engineer" --company "Acme Corp" --location "Remote" -
 *Include an initial state and interview:*
 
 ```bash
-jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --state interview-stage --next-interview-on "24/06/26@10:00"
+jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --state interview --next-interview-on "24/06/26@10:00"
 
 ```
 

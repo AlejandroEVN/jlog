@@ -15,7 +15,7 @@ use rusqlite::{
 #[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
 pub enum JobStatus {
     Applied,
-    InterviewStage,
+    Interview,
     Declined,
     Offer,
     Accepted,
@@ -30,7 +30,7 @@ impl Display for JobStatus {
 impl JobStatus {
     fn from_str(s: &str) -> Self {
         match s {
-            "interview" => Self::InterviewStage,
+            "interview" => Self::Interview,
             "declined" => Self::Declined,
             "offer" => Self::Offer,
             "accepted" => Self::Accepted,
@@ -41,7 +41,7 @@ impl JobStatus {
     const fn to_str(&self) -> &str {
         match self {
             Self::Applied => "applied",
-            Self::InterviewStage => "interview",
+            Self::Interview => "interview",
             Self::Declined => "declined",
             Self::Offer => "offer",
             Self::Accepted => "accepted",
@@ -51,7 +51,7 @@ impl JobStatus {
     fn to_str_colored(&self) -> ColoredString {
         match self {
             Self::Applied => "  Applied   ".blue().bold(),
-            Self::InterviewStage => "Interviewing".yellow().bold(),
+            Self::Interview => "Interviewing".yellow().bold(),
             Self::Declined => "  Declined  ".red().bold(),
             Self::Offer => "  Offer     ".bright_green().bold(),
             Self::Accepted => "  Accepted  ".green().bold(),
