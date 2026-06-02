@@ -1,8 +1,4 @@
-use std::{
-    fmt::{Display, Formatter, Result},
-    process,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::fmt::{self, Display, Formatter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clap::ValueEnum;
@@ -11,6 +7,8 @@ use rusqlite::{
     ToSql,
     types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
+
+use crate::utils::Utils;
 
 #[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
 pub enum JobStatus {
@@ -73,7 +71,7 @@ pub struct JobApplication {
 }
 
 impl Display for JobApplication {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let next_interview_on = self
             .next_interview_on
             .map_or_else(|| "----------------".to_string(), Self::format_timestamp);
@@ -105,19 +103,15 @@ macro_rules! date_format_with_time {
 }
 
 impl JobApplication {
-    pub fn from_args(add_args: crate::args::AddArgs) -> Self {
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards?")
-            .as_millis();
+    pub fn from_args(add_args: crate::args::AddArgs) -> Result<Self, String> {
+        let current_time = Utils::get_current_time()?;
 
         let next_interview_on_as_millis = add_args
             .next_interview_on
-            .map(|next| Self::timestamp_to_millis(&next));
+            .map(|next| Self::timestamp_to_millis(&next))
+            .transpose()?;
 
-        let current_time = i64::try_from(current_time).unwrap();
-
-        Self {
+        Ok(Self {
             id: None,
             title: add_args.title,
             company: add_args.company,
@@ -127,20 +121,18 @@ impl JobApplication {
             updated_on: current_time,
             status: add_args.state.unwrap_or(JobStatus::Applied),
             next_interview_on: next_interview_on_as_millis,
-        }
+        })
     }
 
-    pub fn timestamp_to_millis(timestamp: &str) -> i64 {
+    pub fn timestamp_to_millis(timestamp: &str) -> Result<i64, String> {
         let naive_datetime = NaiveDateTime::parse_from_str(timestamp, "%d/%m/%y@%H:%M")
-            .unwrap_or_else(|_| {
-                eprintln!("Error parsing date. Date should be formatted as dd/mm/yy@HH:MM");
-                process::exit(1);
-            });
+            .map_err(|_| "Error parsing date. Date should be formatted as dd/mm/yy@HH:MM")?;
 
         naive_datetime
             .and_local_timezone(Utc)
-            .unwrap()
-            .timestamp_millis()
+            .single()
+            .map(|dt| dt.timestamp_millis())
+            .ok_or_else(|| "Invalid or ambiguous date/time specified".to_string())
     }
 
     pub fn format_timestamp(ms: i64) -> String {
