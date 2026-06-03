@@ -8,7 +8,7 @@ use rusqlite::{
     types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
 
-use crate::utils::Utils;
+use crate::{jlog, utils::Utils};
 
 #[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
 pub enum JobStatus {
@@ -103,7 +103,7 @@ macro_rules! date_format_with_time {
 }
 
 impl JobApplication {
-    pub fn from_args(add_args: crate::args::AddArgs) -> Result<Self, String> {
+    pub fn from_args(add_args: crate::args::AddArgs) -> jlog::Result<Self> {
         let current_time = Utils::get_current_time()?;
 
         let next_interview_on_as_millis = add_args
@@ -124,15 +124,14 @@ impl JobApplication {
         })
     }
 
-    pub fn timestamp_to_millis(timestamp: &str) -> Result<i64, String> {
-        let naive_datetime = NaiveDateTime::parse_from_str(timestamp, "%d/%m/%y@%H:%M")
-            .map_err(|_| "Error parsing date. Date should be formatted as dd/mm/yy@HH:MM")?;
+    pub fn timestamp_to_millis(timestamp: &str) -> jlog::Result<i64> {
+        let naive_datetime = NaiveDateTime::parse_from_str(timestamp, "%d/%m/%y@%H:%M")?;
 
-        naive_datetime
+        Ok(naive_datetime
             .and_local_timezone(Utc)
             .single()
             .map(|dt| dt.timestamp_millis())
-            .ok_or_else(|| "Invalid or ambiguous date/time specified".to_string())
+            .ok_or("Invalid or ambiguous date/time specified")?)
     }
 
     pub fn format_timestamp(ms: i64) -> String {

@@ -8,14 +8,14 @@ mod utils;
 
 use clap::Parser;
 use directories::ProjectDirs;
-use std::{fs, io::Error, process};
+use std::{fs, process};
 
 use args::Cli;
 use db::DB;
 use jlog::JLog;
 use printer::Printer;
 
-fn main() -> Result<(), Error> {
+fn main() -> jlog::Result<()> {
     let directory = init()?;
 
     let db = DB::new(directory.config_dir())?;
@@ -25,7 +25,7 @@ fn main() -> Result<(), Error> {
 
     let cli_args = Cli::parse();
 
-    match cli_args.command {
+    let result = match cli_args.command {
         args::Commands::Add(add_args) => jlog.add_job(add_args),
         args::Commands::List { state, prune } => jlog.list_jobs(state, prune),
         args::Commands::Remove { id } => jlog.remove_job(id),
@@ -37,25 +37,21 @@ fn main() -> Result<(), Error> {
         } => jlog.add_next_interview_date(id, next_interview_on, clear),
         args::Commands::Open { id } => jlog.open_job_url(id),
         args::Commands::Edit(edit_args) => jlog.update_job_application(edit_args),
+    };
+
+    if let Err(err) = result {
+        eprintln!("{err}");
+        process::exit(1);
     }
-    .map_err(Error::other)?;
 
     process::exit(0);
 }
 
-fn init() -> Result<ProjectDirs, Error> {
-    let project_dirs = ProjectDirs::from("", "", "jlog");
+fn init() -> jlog::Result<ProjectDirs> {
+    let dirs =
+        ProjectDirs::from("", "", "jlog").ok_or("Failed to determine project directories")?;
 
-    project_dirs
-        .ok_or_else(|| {
-            Error::new(
-                std::io::ErrorKind::NotFound,
-                "error: could not determine project directories",
-            )
-        })
-        .and_then(|dirs| {
-            fs::create_dir_all(dirs.data_dir())?;
+    fs::create_dir_all(dirs.data_dir())?;
 
-            Ok(dirs)
-        })
+    Ok(dirs)
 }

@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use crate::{
     args::{AddArgs, EditArgs},
     db::{DB, JobQueryBuilder},
@@ -5,6 +7,8 @@ use crate::{
     printer::Printer,
     utils::Utils,
 };
+
+pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub struct JLog<'a> {
     db: &'a DB,
@@ -20,7 +24,7 @@ impl<'a> JLog<'a> {
         &mut self,
         statuses: Option<Vec<JobStatus>>,
         prune: bool,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let job_applications = self
             .db
             .get_job_applications(JobQueryBuilder::new().with_statuses(statuses).prune(prune))?;
@@ -32,7 +36,7 @@ impl<'a> JLog<'a> {
         Ok(())
     }
 
-    pub(crate) fn find_next_interview(&mut self, days: usize) -> Result<(), String> {
+    pub(crate) fn find_next_interview(&mut self, days: usize) -> Result<()> {
         let current_time = Utils::get_current_time()?;
 
         let mut job_applications = self.db.get_job_applications(JobQueryBuilder::default())?;
@@ -52,7 +56,7 @@ impl<'a> JLog<'a> {
         Ok(())
     }
 
-    pub(crate) fn add_job(&mut self, add_args: AddArgs) -> Result<(), String> {
+    pub(crate) fn add_job(&mut self, add_args: AddArgs) -> Result<()> {
         let job_application = JobApplication::from_args(add_args)?;
 
         let id = self.db.insert_job_application(&job_application)?;
@@ -62,7 +66,7 @@ impl<'a> JLog<'a> {
         Ok(())
     }
 
-    pub(crate) fn remove_job(&mut self, id: i64) -> Result<(), String> {
+    pub(crate) fn remove_job(&mut self, id: i64) -> Result<()> {
         let deleted = self.db.delete_job_application(id)?;
 
         self.printer.job(&deleted);
@@ -75,7 +79,7 @@ impl<'a> JLog<'a> {
         id: i64,
         next_interview_on: Option<String>,
         clear: bool,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let date_as_millis = match (clear, next_interview_on) {
             (true, _) | (false, None) => None,
             (false, Some(date)) => Some(JobApplication::timestamp_to_millis(&date)?),
@@ -88,18 +92,17 @@ impl<'a> JLog<'a> {
         Ok(())
     }
 
-    pub(crate) fn open_job_url(&mut self, id: i64) -> Result<(), String> {
+    pub(crate) fn open_job_url(&mut self, id: i64) -> Result<()> {
         let job_application = self.db.get_one(id)?;
 
-        let _ = open::that(&job_application.url)
-            .map_err(|_| "Failed to open URL: {&job_application.url}".to_string());
+        open::that(&job_application.url)?;
 
         self.printer.print("Opening URL {&ja.url}");
 
         Ok(())
     }
 
-    pub(crate) fn update_job_application(&mut self, edit_args: EditArgs) -> Result<(), String> {
+    pub(crate) fn update_job_application(&mut self, edit_args: EditArgs) -> Result<()> {
         let updated = self.db.update_job_application(edit_args)?;
 
         self.printer.job(&updated);
