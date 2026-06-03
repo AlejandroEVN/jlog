@@ -19,9 +19,17 @@ pub enum Commands {
 
     /// List all tracked job applications
     List {
-        /// Filter by specific job state
+        /// Filter by specific job status
         #[clap(value_delimiter = ' ')]
-        state: Option<Vec<JobStatus>>,
+        status: Option<Vec<JobStatus>>,
+
+        /// Filter by company name
+        #[clap(short, long)]
+        company: Option<String>,
+
+        /// Filter by location
+        #[clap(short, long)]
+        location: Option<String>,
 
         #[arg(long)]
         prune: bool,
@@ -30,7 +38,7 @@ pub enum Commands {
     /// Edit metadata of job application entry
     Edit(EditArgs),
 
-    /// Update the state of an existing job
+    /// Update the status of an existing job
     Interview {
         /// The ID of the job in the database
         id: i64,
@@ -79,7 +87,7 @@ pub struct AddArgs {
     pub url: String,
 
     #[arg(short, long)]
-    pub state: Option<JobStatus>,
+    pub status: Option<JobStatus>,
 
     #[arg(short, long)]
     pub next_interview_on: Option<String>,

@@ -3,7 +3,7 @@ use std::error::Error;
 use crate::{
     args::{AddArgs, EditArgs},
     db::{DB, JobQueryBuilder},
-    job::{JobApplication, JobStatus},
+    job::JobApplication,
     printer::Printer,
     utils::Utils,
 };
@@ -20,14 +20,8 @@ impl<'a> JLog<'a> {
         Self { db, printer }
     }
 
-    pub(crate) fn list_jobs(
-        &mut self,
-        statuses: Option<Vec<JobStatus>>,
-        prune: bool,
-    ) -> Result<()> {
-        let job_applications = self
-            .db
-            .get_job_applications(JobQueryBuilder::new().with_statuses(statuses).prune(prune))?;
+    pub(crate) fn list_jobs(&mut self, query_builder: JobQueryBuilder) -> Result<()> {
+        let job_applications = self.db.get_job_applications(query_builder)?;
 
         for app in job_applications {
             self.printer.job(&app);

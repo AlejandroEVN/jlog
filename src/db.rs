@@ -24,7 +24,9 @@ pub struct DB {
 pub struct JobQueryBuilder {
     id: Option<i64>,
     statuses: Option<Vec<JobStatus>>,
+    company: Option<String>,
     prune: bool,
+    location: Option<String>,
 }
 
 impl JobQueryBuilder {
@@ -47,6 +49,16 @@ impl JobQueryBuilder {
         self
     }
 
+    pub(crate) fn with_company_name(mut self, company: Option<String>) -> Self {
+        self.company = company;
+        self
+    }
+
+    pub(crate) fn with_location(mut self, location: Option<String>) -> Self {
+        self.location = location;
+        self
+    }
+
     fn into_where_clause(self) -> String {
         let mut where_clause = "TRUE".to_string();
 
@@ -66,6 +78,16 @@ impl JobQueryBuilder {
         if let Some(id) = self.id {
             let where_id = format!("AND WHERE id = {id}");
             where_clause.push_str(&where_id);
+        }
+
+        if let Some(company) = self.company {
+            let where_company = format!("AND WHERE LOWER(company) LIKE LOWER('%{company}%')");
+            where_clause.push_str(&where_company);
+        }
+
+        if let Some(location) = self.location {
+            let where_location = format!("AND WHERE LOWER(location) LIKE LOWER('%{location}%')");
+            where_clause.push_str(&where_location);
         }
 
         where_clause

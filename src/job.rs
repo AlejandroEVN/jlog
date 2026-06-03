@@ -119,7 +119,7 @@ impl JobApplication {
             url: add_args.url,
             applied_on: current_time,
             updated_on: current_time,
-            status: add_args.state.unwrap_or(JobStatus::Applied),
+            status: add_args.status.unwrap_or(JobStatus::Applied),
             next_interview_on: next_interview_on_as_millis,
         })
     }
@@ -150,8 +150,8 @@ impl ToSql for JobStatus {
 
 impl FromSql for JobStatus {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let state = value.as_str()?;
+        let status = value.as_str()?;
 
-        Ok(Self::from_str(state))
+        Ok(Self::from_str(status))
     }
 }

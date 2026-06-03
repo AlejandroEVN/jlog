@@ -15,6 +15,8 @@ use db::DB;
 use jlog::JLog;
 use printer::Printer;
 
+use crate::db::JobQueryBuilder;
+
 fn main() -> jlog::Result<()> {
     let directory = init()?;
 
@@ -27,7 +29,18 @@ fn main() -> jlog::Result<()> {
 
     let result = match cli_args.command {
         args::Commands::Add(add_args) => jlog.add_job(add_args),
-        args::Commands::List { state, prune } => jlog.list_jobs(state, prune),
+        args::Commands::List {
+            status,
+            company,
+            location,
+            prune,
+        } => jlog.list_jobs(
+            JobQueryBuilder::new()
+                .with_company_name(company)
+                .with_statuses(status)
+                .with_location(location)
+                .prune(prune),
+        ),
         args::Commands::Remove { id } => jlog.remove_job(id),
         args::Commands::Next { days } => jlog.find_next_interview(days),
         args::Commands::Interview {

@@ -7,7 +7,7 @@
 ## Features
 
 * **Fast Tracking:** Quickly log new job openings, companies, locations, and application links.
-* **Status Lifecycle Management:** Move application states through `applied`, `interview`, `declined`, `offer`, and `accepted`.
+* **Status Lifecycle Management:** Move application status through `applied`, `interview`, `declined`, `offer`, and `accepted`.
 * **Interview Scheduler:** Track upcoming interview dates and display what's next immediately.
 * **Quick Links:** Open the original job posting URL directly in your default browser using the application ID.
 * **Rich Terminal UI:** Colored, formatted outputs for high readability at a glance.
@@ -57,7 +57,7 @@ Usage: jlog <COMMAND>
 Commands:
   add        Add a new job application
   list       List all tracked job applications
-  interview  Update the state of an existing job
+  interview  Add/update the interview date for a job application
   edit       Update the job application's metadata
   remove     Delete a job application record
   next       Print next upcoming interview
@@ -89,13 +89,13 @@ jlog add --title "Software Engineer" --company "Acme Corp" --location "Remote" -
 *Include an initial state and interview:*
 
 ```bash
-jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --state interview --next-interview-on "24/06/26@10:00"
+jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --status interview --next-interview-on "24/06/26@10:00"
 
 ```
 
-## Job Lifecycle States
+## Job Lifecycle Status
 
-The application recognizes the following valid state parameters (case-insensitive flag passing provided by `clap`):
+The application recognizes the following valid status parameters (case-insensitive flag passing provided by `clap`):
 
 | State Flag | Display Text |
 | --- | --- |
