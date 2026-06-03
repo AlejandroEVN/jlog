@@ -1,9 +1,16 @@
-use std::error::Error;
+use core::fmt;
+use std::{
+    error::Error,
+    fmt::{Display, Formatter},
+};
+
+use colored::{ColoredString, Colorize};
 
 use crate::{
     args::{AddArgs, EditArgs},
     db::{DB, JobQueryBuilder},
-    job::JobApplication,
+    jlog,
+    job::{JobApplication, JobStatus},
     printer::Printer,
     utils::Utils,
 };
@@ -100,6 +107,177 @@ impl<'a> JLog<'a> {
         let updated = self.db.update_job_application(edit_args)?;
 
         self.printer.job(&updated);
+
+        Ok(())
+    }
+
+    #[allow(clippy::cast_precision_loss)]
+    pub(crate) fn display_stats(&mut self) -> jlog::Result<()> {
+        let job_applications = self.db.get_job_applications(JobQueryBuilder::default())?;
+
+        let mut stats = Stats {
+            total: job_applications.len(),
+            ..Default::default()
+        };
+
+        if stats.total == 0 {
+            self.printer.print(&stats.to_string());
+            return Ok(());
+        }
+
+        for ja in &job_applications {
+            match ja.status {
+                crate::job::JobStatus::Applied => stats.applied += 1,
+                crate::job::JobStatus::Interview => stats.interview += 1,
+                crate::job::JobStatus::Declined => stats.declined += 1,
+                crate::job::JobStatus::Offer => stats.offer += 1,
+                crate::job::JobStatus::Accepted => stats.accepted += 1,
+            }
+        }
+
+        let positive_outcomes = (stats.interview + stats.offer + stats.accepted) as f64;
+        stats.conversion_rate = positive_outcomes / stats.total as f64;
+
+        self.printer.print(&stats.to_string());
+
+        Ok(())
+    }
+}
+
+pub enum StatMetric {
+    Total,
+    Applied,
+    Interview,
+    Declined,
+    Offer,
+    Accepted,
+    ConversionRate,
+}
+
+impl StatMetric {
+    const fn raw_title(&self) -> &'static str {
+        match self {
+            Self::Total => "Total Applications",
+            Self::Applied => "Applied",
+            Self::Interview => "Interview",
+            Self::Declined => "Declined",
+            Self::Offer => "Offers",
+            Self::Accepted => "Accepted",
+            Self::ConversionRate => "Conversion Rate",
+        }
+    }
+
+    pub(crate) fn to_str_colored(&self) -> ColoredString {
+        match self {
+            Self::Applied => self.raw_title().blue().bold(),
+            Self::Interview => self.raw_title().yellow().bold(),
+            Self::Declined => self.raw_title().red().bold(),
+            Self::Offer => self.raw_title().purple().bold(),
+            Self::Accepted => self.raw_title().green().bold(),
+            Self::Total | Self::ConversionRate => self.raw_title().bold(),
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+struct Stats {
+    total: usize,
+    applied: usize,
+    interview: usize,
+    declined: usize,
+    offer: usize,
+    accepted: usize,
+    conversion_rate: f64,
+}
+
+impl Stats {
+    const fn calculate_percentage(&self, metric: &StatMetric) -> f64 {
+        if self.total == 0 {
+            return 0.0;
+        }
+
+        #[allow(clippy::cast_precision_loss)]
+        match metric {
+            StatMetric::Applied => (self.applied as f64 / self.total as f64) * 100.0,
+            StatMetric::Interview => (self.interview as f64 / self.total as f64) * 100.0,
+            StatMetric::Declined => (self.declined as f64 / self.total as f64) * 100.0,
+            StatMetric::Offer => (self.offer as f64 / self.total as f64) * 100.0,
+            StatMetric::Accepted => (self.accepted as f64 / self.total as f64) * 100.0,
+            StatMetric::Total => {
+                if self.total > 0 {
+                    100.0
+                } else {
+                    0.0
+                }
+            }
+            StatMetric::ConversionRate => self.conversion_rate,
+        }
+    }
+
+    const fn count(&self, metric: &StatMetric) -> usize {
+        match metric {
+            StatMetric::Total => self.total,
+            StatMetric::Applied => self.applied,
+            StatMetric::Interview => self.interview,
+            StatMetric::Declined => self.declined,
+            StatMetric::Offer => self.offer,
+            StatMetric::Accepted => self.accepted,
+            StatMetric::ConversionRate => 0,
+        }
+    }
+}
+
+impl From<&JobStatus> for StatMetric {
+    fn from(status: &JobStatus) -> Self {
+        match status {
+            JobStatus::Applied => Self::Applied,
+            JobStatus::Interview => Self::Interview,
+            JobStatus::Declined => Self::Declined,
+            JobStatus::Offer => Self::Offer,
+            JobStatus::Accepted => Self::Accepted,
+        }
+    }
+}
+
+impl Display for Stats {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let title_width = 20;
+        let count_width = 4;
+        let precision = 2;
+
+        let header = "----- JLOG JOB HUNT STATISTICS -----\n";
+
+        writeln!(f, "{header}")?;
+        writeln!(
+            f,
+            "{:<title_width$} {:>count_width$}",
+            StatMetric::Total.to_str_colored(),
+            self.total
+        )?;
+
+        let core_stats = [
+            StatMetric::Applied,
+            StatMetric::Interview,
+            StatMetric::Declined,
+            StatMetric::Offer,
+            StatMetric::Accepted,
+        ];
+
+        for stat in core_stats {
+            writeln!(
+                f,
+                "{:title_width$} {:>count_width$} ({:.precision$}%)",
+                stat.to_str_colored(),
+                self.count(&stat),
+                self.calculate_percentage(&stat)
+            )?;
+        }
+        writeln!(
+            f,
+            "\n{:title_width$} {:>7.precision$}%",
+            StatMetric::ConversionRate.to_str_colored(),
+            self.calculate_percentage(&StatMetric::ConversionRate),
+        )?;
 
         Ok(())
     }

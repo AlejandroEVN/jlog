@@ -2,13 +2,16 @@ use std::fmt::{self, Display, Formatter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clap::ValueEnum;
-use colored::{ColoredString, Colorize};
+use colored::Colorize;
 use rusqlite::{
     ToSql,
     types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
 
-use crate::{jlog, utils::Utils};
+use crate::{
+    jlog::{self, StatMetric},
+    utils::Utils,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
 pub enum JobStatus {
@@ -45,16 +48,6 @@ impl JobStatus {
             Self::Accepted => "accepted",
         }
     }
-
-    fn to_str_colored(&self) -> ColoredString {
-        match self {
-            Self::Applied => "  Applied   ".blue().bold(),
-            Self::Interview => "Interviewing".yellow().bold(),
-            Self::Declined => "  Declined  ".red().bold(),
-            Self::Offer => "  Offer     ".bright_green().bold(),
-            Self::Accepted => "  Accepted  ".green().bold(),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -76,11 +69,13 @@ impl Display for JobApplication {
             .next_interview_on
             .map_or_else(|| "----------------".to_string(), Self::format_timestamp);
 
+        let ui_metric = StatMetric::from(&self.status).to_str_colored();
+
         write!(
             f,
-            "[{}][{}] {:<55} @ {:<10} {}",
+            "[{}][{:^10}] {:<55} @ {:<10} {}",
             next_interview_on,
-            self.status.to_str_colored(),
+            ui_metric,
             self.title.bold(),
             self.company,
             format!("({})", self.id.unwrap_or(0)).dimmed(),

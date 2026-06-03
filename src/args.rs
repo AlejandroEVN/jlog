@@ -65,6 +65,9 @@ pub enum Commands {
         days: usize,
     },
 
+    /// See your job hunting stats
+    Stats,
+
     /// Opens job application's URL in default browser
     Open {
         /// The ID of the job in the database

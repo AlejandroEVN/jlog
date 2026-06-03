@@ -50,6 +50,7 @@ fn main() -> jlog::Result<()> {
         } => jlog.add_next_interview_date(id, next_interview_on, clear),
         args::Commands::Open { id } => jlog.open_job_url(id),
         args::Commands::Edit(edit_args) => jlog.update_job_application(edit_args),
+        args::Commands::Stats => jlog.display_stats(),
     };
 
     if let Err(err) = result {
