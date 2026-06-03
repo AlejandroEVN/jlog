@@ -57,6 +57,7 @@ Usage: jlog <COMMAND>
 Commands:
   add        Add a new job application
   list       List all tracked job applications
+  stats      Display job hunting stats
   interview  Add/update the interview date for a job application
   edit       Update the job application's metadata
   remove     Delete a job application record
