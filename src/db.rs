@@ -76,17 +76,23 @@ impl JobQueryBuilder {
         }
 
         if let Some(id) = self.id {
-            let where_id = format!("AND WHERE id = {id}");
+            let prune = if self.prune { "!=" } else { "=" };
+
+            let where_id = format!("AND WHERE id {prune} {id}");
             where_clause.push_str(&where_id);
         }
 
         if let Some(company) = self.company {
-            let where_company = format!("AND WHERE LOWER(company) LIKE LOWER('%{company}%')");
+            let prune = if self.prune { "NOT LIKE" } else { "LIKE" };
+
+            let where_company = format!("AND WHERE LOWER(company) {prune} LOWER('%{company}%')");
             where_clause.push_str(&where_company);
         }
 
         if let Some(location) = self.location {
-            let where_location = format!("AND WHERE LOWER(location) LIKE LOWER('%{location}%')");
+            let prune = if self.prune { "NOT LIKE" } else { "LIKE" };
+
+            let where_location = format!("AND WHERE LOWER(location) {prune} LOWER('%{location}%')");
             where_clause.push_str(&where_location);
         }
 
