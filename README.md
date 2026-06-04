@@ -61,6 +61,7 @@ Commands:
   interview  Add/update the interview date for a job application
   edit       Update the job application's metadata
   remove     Delete a job application record
+  export     Export data into JSON or CSV file
   next       Print next upcoming interview
   open       Opens job application's URL in default browser
   help       Print this message or the help of the given subcommand(s)
