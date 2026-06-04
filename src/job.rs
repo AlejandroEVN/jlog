@@ -7,13 +7,14 @@ use rusqlite::{
     ToSql,
     types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
+use serde::Serialize;
 
 use crate::{
     jlog::{self, StatMetric},
     utils::Utils,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, PartialEq, Eq, ValueEnum, Serialize)]
 pub enum JobStatus {
     Applied,
     Interview,
@@ -50,7 +51,7 @@ impl JobStatus {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct JobApplication {
     pub id: Option<i64>,
     pub title: String,

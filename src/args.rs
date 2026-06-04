@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 
 use crate::job::JobStatus;
 
@@ -10,6 +10,25 @@ use crate::job::JobStatus;
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum FileFormat {
+    Json,
+    Csv,
+}
+
+impl FileFormat {
+    pub(crate) fn output(self) -> String {
+        format!("output.{}", self.extension())
+    }
+
+    pub(crate) const fn extension(&self) -> &str {
+        match self {
+            Self::Json => "json",
+            Self::Csv => "csv",
+        }
+    }
 }
 
 #[derive(Subcommand)]
@@ -67,6 +86,17 @@ pub enum Commands {
 
     /// See your job hunting stats
     Stats,
+
+    /// Export your data and save it in a file
+    Export {
+        /// Output file name [default: "./output.json"]
+        #[arg(short, long)]
+        output: Option<String>,
+
+        /// File format [default: json]
+        #[arg(short, long)]
+        format: Option<FileFormat>,
+    },
 
     /// Opens job application's URL in default browser
     Open {

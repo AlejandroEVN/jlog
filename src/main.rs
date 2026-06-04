@@ -51,6 +51,7 @@ fn main() -> jlog::Result<()> {
         args::Commands::Open { id } => jlog.open_job_url(id),
         args::Commands::Edit(edit_args) => jlog.update_job_application(edit_args),
         args::Commands::Stats => jlog.display_stats(),
+        args::Commands::Export { format, output } => jlog.export_data(format, output),
     };
 
     if let Err(err) = result {

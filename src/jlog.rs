@@ -1,13 +1,17 @@
 use core::fmt;
 use std::{
     error::Error,
+    ffi::OsStr,
     fmt::{Display, Formatter},
+    fs,
+    path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use colored::{ColoredString, Colorize};
 
 use crate::{
-    args::{AddArgs, EditArgs},
+    args::{self, AddArgs, EditArgs, FileFormat},
     db::{DB, JobQueryBuilder},
     jlog,
     job::{JobApplication, JobStatus},
@@ -141,6 +145,59 @@ impl<'a> JLog<'a> {
         self.printer.print(&stats.to_string());
 
         Ok(())
+    }
+
+    pub(crate) fn export_data(
+        &self,
+        format: Option<args::FileFormat>,
+        output: Option<String>,
+    ) -> jlog::Result<()> {
+        let file_format = format.map_or(args::FileFormat::Json, |f| f);
+        let output_file = output.unwrap_or_else(|| file_format.output());
+
+        let output_as_path = PathBuf::from_str(&output_file)?;
+
+        Self::check_file_extension(&output_as_path, file_format)?;
+
+        let job_applications = self.db.get_job_applications(JobQueryBuilder::default())?;
+
+        let data = match file_format {
+            args::FileFormat::Json => serde_json::to_string(&job_applications)?,
+            args::FileFormat::Csv => Self::serialize_to_csv(&job_applications)?,
+        };
+
+        fs::write(output_file, data)?;
+
+        Ok(())
+    }
+
+    fn check_file_extension(output_as_path: &Path, file_format: FileFormat) -> Result<()> {
+        if output_as_path.extension() != Some(OsStr::new(file_format.extension())) {
+            let expected_path = output_as_path
+                .extension()
+                .map_or_else(|| "none".to_string(), |e| e.to_string_lossy().into_owned());
+
+            return Err(Box::<dyn Error>::from(format!(
+                "File extension \"{}\" doesn't match format {:?}",
+                expected_path,
+                file_format.extension(),
+            )));
+        }
+
+        Ok(())
+    }
+
+    fn serialize_to_csv(job_applications: &Vec<JobApplication>) -> Result<String> {
+        let mut writer = csv::Writer::from_writer(vec![]);
+
+        for ja in job_applications {
+            writer.serialize(ja)?;
+        }
+
+        let inner_buffer = writer.into_inner()?;
+        let csv_string = String::from_utf8(inner_buffer)?;
+
+        Ok(csv_string)
     }
 }
 
