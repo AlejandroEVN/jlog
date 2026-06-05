@@ -39,7 +39,7 @@ pub enum Commands {
     /// List all tracked job applications
     List {
         /// Filter by specific job status
-        #[clap(value_delimiter = ' ')]
+        #[clap(short, long, value_delimiter = ' ')]
         status: Option<Vec<JobStatus>>,
 
         /// Filter by company name
