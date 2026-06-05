@@ -140,7 +140,7 @@ impl<'a> JLog<'a> {
         }
 
         let positive_outcomes = (stats.interview + stats.offer + stats.accepted) as f64;
-        stats.conversion_rate = positive_outcomes / stats.total as f64;
+        stats.conversion_rate = (positive_outcomes / stats.total as f64) * 100.0;
 
         self.printer.print(&stats.to_string());
 
