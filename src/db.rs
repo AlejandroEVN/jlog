@@ -8,10 +8,12 @@ use crate::{
 use rusqlite::{Connection, ToSql, params};
 
 macro_rules! push_optional_field {
-    ($assignments:ident, $values:expr, $field:expr, $column_name:expr) => {
-        if let Some(val) = $field {
+    ($assignments:ident, $values:expr, $field:expr, $column_name:expr, $should_clear:expr) => {
+        if $should_clear {
+            $assignments.push(concat!($column_name, " = NULL"));
+        } else if let Some(val) = $field {
             $assignments.push(concat!($column_name, " = ?"));
-            $values.push(Box::new(val) as Box<dyn rusqlite::ToSql>);
+            $values.push(Box::new(val));
         }
     };
 }
@@ -231,11 +233,25 @@ impl DB {
         let mut assignments = Vec::new();
         let mut values: Vec<Box<dyn ToSql>> = Vec::new();
 
-        push_optional_field!(assignments, values, edit_args.location, "location");
-        push_optional_field!(assignments, values, edit_args.status, "status");
-        push_optional_field!(assignments, values, edit_args.company, "company");
-        push_optional_field!(assignments, values, edit_args.url, "url");
-        push_optional_field!(assignments, values, edit_args.title, "title");
+        push_optional_field!(assignments, values, edit_args.location, "location", false);
+        push_optional_field!(assignments, values, edit_args.status, "status", false);
+        push_optional_field!(assignments, values, edit_args.company, "company", false);
+        push_optional_field!(assignments, values, edit_args.url, "url", false);
+        push_optional_field!(assignments, values, edit_args.title, "title", false);
+        if edit_args.next_interview_on.is_some() || edit_args.clear_interview {
+            let date_as_millis = match edit_args.next_interview_on {
+                Some(date_str) => Some(JobApplication::timestamp_to_millis(&date_str)?),
+                None => Some(0),
+            };
+
+            push_optional_field!(
+                assignments,
+                values,
+                date_as_millis,
+                "next_interview_on",
+                edit_args.clear_interview
+            );
+        }
 
         if assignments.is_empty() {
             return Err(Box::<dyn std::error::Error>::from(
@@ -259,21 +275,5 @@ impl DB {
         self.conn.execute(&query, params)?;
 
         self.get_one(edit_args.id)
-    }
-
-    pub(crate) fn update_next_interview_date(
-        &self,
-        id: i64,
-        date_as_millis: Option<i64>,
-    ) -> jlog::Result<JobApplication> {
-        self.conn.execute(
-            format!(
-                "UPDATE {TABLE_NAME} SET next_interview_on = ?1, updated_on = ?2 WHERE id = ?3"
-            )
-            .as_str(),
-            params![date_as_millis, chrono::Utc::now().timestamp_millis(), id],
-        )?;
-
-        self.get_one(id)
     }
 }

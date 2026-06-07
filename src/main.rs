@@ -43,11 +43,6 @@ fn main() -> jlog::Result<()> {
         ),
         args::Commands::Remove { id } => jlog.remove_job(id),
         args::Commands::Next { days } => jlog.find_next_interview(days),
-        args::Commands::Interview {
-            id,
-            next_interview_on,
-            clear,
-        } => jlog.add_next_interview_date(id, next_interview_on, clear),
         args::Commands::Open { id } => jlog.open_job_url(id),
         args::Commands::Edit(edit_args) => jlog.update_job_application(edit_args),
         args::Commands::Stats => jlog.display_stats(),

@@ -79,24 +79,6 @@ impl<'a> JLog<'a> {
         Ok(())
     }
 
-    pub(crate) fn add_next_interview_date(
-        &mut self,
-        id: i64,
-        next_interview_on: Option<String>,
-        clear: bool,
-    ) -> Result<()> {
-        let date_as_millis = match (clear, next_interview_on) {
-            (true, _) | (false, None) => None,
-            (false, Some(date)) => Some(JobApplication::timestamp_to_millis(&date)?),
-        };
-
-        let updated = self.db.update_next_interview_date(id, date_as_millis)?;
-
-        self.printer.job(&updated);
-
-        Ok(())
-    }
-
     pub(crate) fn open_job_url(&mut self, id: i64) -> Result<()> {
         let job_application = self.db.get_one(id)?;
 

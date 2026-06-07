@@ -5,7 +5,7 @@ use crate::job::JobStatus;
 #[derive(Parser)]
 #[command(name = "jlog")]
 #[command(author = "Alejandro Noailles <vasconalex17@gmail.com>")]
-#[command(version = "1.0.2")]
+#[command(version = "1.2.0")]
 #[command(about = "Tracks job applications right from the terminal", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
@@ -56,20 +56,6 @@ pub enum Commands {
 
     /// Edit metadata of job application entry
     Edit(EditArgs),
-
-    /// Update the status of an existing job
-    Interview {
-        /// The ID of the job in the database
-        id: i64,
-
-        /// The new interview date
-        #[arg(required_unless_present = "clear")]
-        next_interview_on: Option<String>,
-
-        /// Clear the scheduled interview date entirely
-        #[arg(long, short, conflicts_with = "next_interview_on")]
-        clear: bool,
-    },
 
     /// Delete a job application record
     Remove {
@@ -144,4 +130,11 @@ pub struct EditArgs {
 
     #[arg(short, long, value_enum)]
     pub status: Option<JobStatus>,
+
+    #[arg(short, long, conflicts_with = "clear_interview")]
+    pub next_interview_on: Option<String>,
+
+    /// Clear the scheduled interview date entirely
+    #[arg(long, conflicts_with = "next_interview_on")]
+    pub clear_interview: bool,
 }

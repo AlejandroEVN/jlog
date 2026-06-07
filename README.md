@@ -58,7 +58,6 @@ Commands:
   add        Add a new job application
   list       List all tracked job applications
   stats      Display job hunting stats
-  interview  Add/update the interview date for a job application
   edit       Update the job application's metadata
   remove     Delete a job application record
   export     Export data into JSON or CSV file
@@ -91,7 +90,7 @@ jlog add --title "Software Engineer" --company "Acme Corp" --location "Remote" -
 *Include an initial state and interview:*
 
 ```bash
-jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --status interview --next-interview-on "24/06/26@10:00"
+jlog add -t "Rust Developer" -c "Ferris Inc" -l "New York" -u "https://ferris.io/job" --status --next-interview-on "24/06/26@10:00"
 
 ```
 
