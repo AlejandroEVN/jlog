@@ -5,7 +5,7 @@ use crate::job::JobStatus;
 #[derive(Parser)]
 #[command(name = "jlog")]
 #[command(author = "Alejandro Noailles <vasconalex17@gmail.com>")]
-#[command(version = "1.2.0")]
+#[command(version = "1.2.1")]
 #[command(about = "Tracks job applications right from the terminal", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]

@@ -84,7 +84,8 @@ impl<'a> JLog<'a> {
 
         open::that(&job_application.url)?;
 
-        self.printer.print("Opening URL {&ja.url}");
+        self.printer
+            .print(&format!("Opening URL {}", &job_application.url));
 
         Ok(())
     }
